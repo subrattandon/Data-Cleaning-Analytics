@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import seaborn as sns
 import numpy as np
+import pandas as pd
 import os
 
 # ── Global Style Configuration ─────────────────────────────────────────────────
@@ -133,11 +134,71 @@ def add_value_labels(ax, fmt="{:.0f}", fontsize=9, color=None, offset=5):
             )
 
 
+def format_indian_currency(num, is_kpi=False, decimals=0):
+    """Format a number into Indian currency format (e.g., ₹10,00,000 or ₹1.5 Cr)."""
+    if pd.isna(num): return "₹0"
+    
+    if is_kpi:
+        if abs(num) >= 1_00_00_000:
+            return f"₹{num/1_00_00_000:.2f} Cr"
+        elif abs(num) >= 1_00_000:
+            return f"₹{num/1_00_000:.2f} L"
+        elif abs(num) >= 1_000:
+            return f"₹{num/1_000:.1f} K"
+            
+    is_negative = num < 0
+    num = abs(num)
+    
+    if decimals > 0:
+        int_part = int(num)
+        dec_part = f"{num:.{decimals}f}".split('.')[1]
+    else:
+        int_part = int(round(num))
+        dec_part = ""
+        
+    s = str(int_part)
+    if len(s) <= 3:
+        formatted_int = s
+    else:
+        last_three = s[-3:]
+        other_digits = s[:-3]
+        parts = []
+        while len(other_digits) > 0:
+            parts.insert(0, other_digits[-2:])
+            other_digits = other_digits[:-2]
+        formatted_int = f"{','.join(parts)},{last_three}"
+        
+    res = f"₹{formatted_int}"
+    if decimals > 0:
+        res += f".{dec_part}"
+        
+    return f"-{res}" if is_negative else res
+
+def format_indian_number(num):
+    """Format a normal number into Indian comma format (e.g., 10,00,000)."""
+    if pd.isna(num): return "0"
+    is_negative = num < 0
+    num = abs(int(num))
+    s = str(num)
+    if len(s) <= 3:
+        formatted = s
+    else:
+        last_three = s[-3:]
+        other_digits = s[:-3]
+        parts = []
+        while len(other_digits) > 0:
+            parts.insert(0, other_digits[-2:])
+            other_digits = other_digits[:-2]
+        formatted = f"{','.join(parts)},{last_three}"
+    return f"-{formatted}" if is_negative else formatted
+
 def format_currency_axis(ax, axis="y"):
-    """Format an axis to show currency values (e.g., ₹1.2K, ₹3.5M)."""
+    """Format an axis to show currency values (e.g., ₹1.2L, ₹3.5Cr)."""
     def currency_formatter(x, p):
-        if abs(x) >= 1_000_000:
-            return f"₹{x/1_000_000:.1f}M"
+        if abs(x) >= 1_00_00_000:
+            return f"₹{x/1_00_00_000:.1f}Cr"
+        elif abs(x) >= 1_00_000:
+            return f"₹{x/1_00_000:.1f}L"
         elif abs(x) >= 1_000:
             return f"₹{x/1_000:.1f}K"
         else:

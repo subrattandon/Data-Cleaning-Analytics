@@ -36,7 +36,7 @@ from matplotlib.patches import FancyBboxPatch
 from src.viz_utils import (
     setup_style, save_figure, COLORS, CATEGORY_PALETTE,
     add_value_labels, format_currency_axis, create_kpi_card,
-    add_watermark, styled_heatmap
+    add_watermark, styled_heatmap, format_indian_currency, format_indian_number
 )
 
 setup_style()
@@ -76,9 +76,9 @@ def chart_kpi_dashboard(df):
     avg_shipping = df["shipping_days"].mean()
 
     kpis = [
-        {"value": f"₹{total_revenue:,.0f}", "label": "Total Revenue", "color": COLORS["primary"]},
-        {"value": f"{total_orders:,}", "label": "Total Orders", "color": COLORS["accent"]},
-        {"value": f"₹{avg_order_val:,.2f}", "label": "Avg Order Value", "color": COLORS["success"]},
+        {"value": format_indian_currency(total_revenue), "label": "Total Revenue", "color": COLORS["primary"]},
+        {"value": format_indian_number(total_orders), "label": "Total Orders", "color": COLORS["accent"]},
+        {"value": format_indian_currency(avg_order_val, decimals=2), "label": "Avg Order Value", "color": COLORS["success"]},
         {"value": f"{avg_rating:.1f} ★", "label": "Avg Rating", "color": COLORS["warning"]},
         {"value": f"{avg_shipping:.1f} days", "label": "Avg Shipping", "color": COLORS["info"]},
     ]
@@ -122,7 +122,7 @@ def chart_revenue_trend(df):
     peak_month = monthly.loc[peak_idx, "month"]
     peak_revenue = monthly.loc[peak_idx, "revenue"]
     ax.annotate(
-        f"Peak: ₹{peak_revenue:,.0f}",
+        f"Peak: {format_indian_currency(peak_revenue)}",
         xy=(peak_month, peak_revenue),
         xytext=(30, 30), textcoords="offset points",
         fontsize=11, fontweight="bold", color=COLORS["accent"],
@@ -179,7 +179,7 @@ def chart_category_performance(df):
                    linewidth=0.5)
 
     for bar, val in zip(bars, cat_stats["total_revenue"]):
-        label = f"₹{val:,.0f}" if val < 1_000_000 else f"₹{val/1_000_000:.1f}M"
+        label = format_indian_currency(val, is_kpi=True)
         ax.text(bar.get_width() + bar.get_width() * 0.02,
                 bar.get_y() + bar.get_height() / 2,
                 label, va="center", fontsize=10,
@@ -245,7 +245,7 @@ def chart_customer_demographics(df):
 
         for bar, val in zip(bars, age_revenue.values):
             ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 5,
-                    f"₹{val:.0f}", ha="center", fontsize=10,
+                    format_indian_currency(val), ha="center", fontsize=10,
                     color=COLORS["text_secondary"], fontweight="bold")
 
         ax.set_title("Avg Order Value by Age Group", fontsize=14, fontweight="bold")
@@ -316,7 +316,7 @@ def chart_payment_methods(df):
     ax.set_title("Payment Method Distribution", fontsize=14, fontweight="bold")
 
     # Center text
-    ax.text(0, 0, f"{len(df):,}\nOrders", ha="center", va="center",
+    ax.text(0, 0, f"{format_indian_number(len(df))}\nOrders", ha="center", va="center",
             fontsize=14, fontweight="bold", color=COLORS["text"])
 
     # Right: Avg order value by payment method
@@ -330,7 +330,7 @@ def chart_payment_methods(df):
 
     for bar, val in zip(bars, payment_aov.values):
         ax.text(bar.get_width() + 5, bar.get_y() + bar.get_height() / 2,
-                f"₹{val:.2f}", va="center", fontsize=10,
+                format_indian_currency(val, decimals=2), va="center", fontsize=10,
                 color=COLORS["text_secondary"], fontweight="bold")
 
     ax.set_title("Avg Order Value by Payment Method",
@@ -419,7 +419,7 @@ def chart_day_patterns(df):
 
     for bar, val in zip(bars, day_stats["order_count"]):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 5,
-                f"{val:,.0f}", ha="center", fontsize=9,
+                format_indian_number(val), ha="center", fontsize=9,
                 color=COLORS["text_secondary"], fontweight="bold")
 
     # Right: Avg revenue by day
@@ -467,7 +467,7 @@ def chart_top_cities(df):
                    linewidth=0.5, alpha=0.9)
 
     for bar, val in zip(bars, city_revenue.values):
-        label = f"₹{val:,.0f}" if val < 1_000_000 else f"₹{val/1_000_000:.1f}M"
+        label = format_indian_currency(val, is_kpi=True)
         ax.text(bar.get_width() + bar.get_width() * 0.02,
                 bar.get_y() + bar.get_height() / 2,
                 label, va="center", fontsize=10,

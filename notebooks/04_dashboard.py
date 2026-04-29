@@ -108,6 +108,8 @@ COLORS = {
 }
 
 
+from src.viz_utils import format_indian_currency, format_indian_number
+
 # ── Data Loading ───────────────────────────────────────────────────────────────
 
 @st.cache_data
@@ -189,7 +191,7 @@ def main():
 
         st.markdown("---")
         st.markdown("### 📊 Dataset Info")
-        st.info(f"**{len(df):,}** total records\n\n"
+        st.info(f"**{format_indian_number(len(df))}** total records\n\n"
                 f"**{len(df.columns)}** columns\n\n"
                 f"**{df['category'].nunique()}** categories")
 
@@ -227,7 +229,7 @@ def main():
     """, unsafe_allow_html=True)
 
     st.markdown(f"<p style='text-align: center; color: #64748B;'>"
-                f"Showing <b>{len(filtered):,}</b> of {len(df):,} records "
+                f"Showing <b>{format_indian_number(len(filtered))}</b> of {format_indian_number(len(df))} records "
                 f"({len(filtered)/len(df)*100:.1f}%)</p>",
                 unsafe_allow_html=True)
 
@@ -238,20 +240,15 @@ def main():
 
     with col1:
         total_rev = filtered[amount_col].sum() if amount_col in filtered.columns else 0
-        if total_rev >= 1_000_000:
-            rev_str = f"₹{total_rev/1_000_000:.2f}M"
-        elif total_rev >= 1_000:
-            rev_str = f"₹{total_rev/1_000:.1f}K"
-        else:
-            rev_str = f"₹{total_rev:,.0f}"
+        rev_str = format_indian_currency(total_rev, is_kpi=True)
         kpi_card("Total Revenue", rev_str, COLORS["primary"])
 
     with col2:
-        kpi_card("Total Orders", f"{len(filtered):,}", COLORS["accent"])
+        kpi_card("Total Orders", f"{format_indian_number(len(filtered))}", COLORS["accent"])
 
     with col3:
         aov = filtered[amount_col].mean() if amount_col in filtered.columns and len(filtered) > 0 else 0
-        kpi_card("Avg Order Value", f"₹{aov:,.2f}", COLORS["success"])
+        kpi_card("Avg Order Value", f"{format_indian_currency(aov, decimals=2)}", COLORS["success"])
 
     with col4:
         avg_r = filtered["rating"].mean() if len(filtered) > 0 else 0
@@ -317,7 +314,7 @@ def main():
                 height=380,
                 showlegend=False,
                 annotations=[dict(
-                    text=f"₹{cat_rev.sum():,.0f}",
+                    text=f"{format_indian_currency(cat_rev.sum(), is_kpi=True)}",
                     x=0.5, y=0.5, font_size=16,
                     font_color=COLORS["primary"],
                     showarrow=False
@@ -343,7 +340,7 @@ def main():
                     colorscale="Viridis",
                     line=dict(color="#334155", width=0.5)
                 ),
-                text=[f"₹{v:,.0f}" for v in city_rev.values],
+                text=[f"{format_indian_currency(v, is_kpi=True)}" for v in city_rev.values],
                 textposition="outside",
                 textfont=dict(color="#CBD5E1", size=10)
             )])
